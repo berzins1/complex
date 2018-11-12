@@ -1,0 +1,22 @@
+sudo: required
+services:
+  -docker
+
+before_install:
+  -docker build -t mberzins/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run mberzins/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t mberzins/multi-client ./client
+  - docker build -t mberzins/multi-nginx ./nginx
+  - docker build -t mberzins/multi-server ./server
+  - docker build -t mberzins/multi-worker ./worker
+  # login to docker cli
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # take those images and push them to docker hub
+  - docker push mberzins/multi-client
+  - docker push mberzins/multi-nginx
+  - docker push mberzins/multi-server
+  - docker push mberzins/multi-worker
